@@ -1,23 +1,25 @@
 # stockapp-orders
 
-Módulo KMP (Kotlin Multiplatform) + Compose Multiplatform do [StockApp](https://github.com/dgbarreto/stockapp-app) — app de acompanhamento de investimentos (projeto de estudo).
+Kotlin Multiplatform (KMP) + Compose Multiplatform module of [StockApp](https://github.com/dgbarreto/stockapp-app) — an investment tracking app (learning project).
 
-Domain + data (ordens de compra/venda do usuário, cliente do [`stockapp-backend`](https://github.com/dgbarreto/stockapp-backend), endpoints `/orders`) e telas Compose de lançamento/listagem de ordens, incluindo um bottom sheet rápido pra registro ágil de compra/venda ou declaração de posição já existente sem detalhar histórico.
+Domain + data (the user's buy/sell orders, client for [`stockapp-backend`](https://github.com/dgbarreto/stockapp-backend), `/orders` endpoints) and Compose screens for entering/listing orders, including a quick bottom sheet for fast buy/sell entry or declaring an existing position without detailing its full history.
 
-## Estrutura
+`Order` is becoming the single source of truth for the portfolio: every create/update/delete recalculates the corresponding `Position` from scratch, transactionally, in the backend — replacing the manual position entry currently in [`stockapp-portfolio`](https://github.com/dgbarreto/stockapp-portfolio).
 
-- `orders/` — único módulo do repo, alvo Android (via `com.android.kotlin.multiplatform.library`) + iOS (framework estático `Orders`), código comum em `orders/src/commonMain`.
-- `sample/` + `sample-android/` — apps de exemplo, dev-only, pra validar o módulo isoladamente (login via `stockapp-auth` + tela de placeholder até as telas de ordens existirem).
+## Structure
+
+- `orders/` — the only module in this repo, targeting Android (via `com.android.kotlin.multiplatform.library`) + iOS (static framework `Orders`), shared code in `orders/src/commonMain`.
+- `sample/` + `sample-android/` — dev-only sample apps used to validate the module in isolation (login via `stockapp-auth` + a placeholder screen until the order screens exist).
 
 ## Status
 
-**Fase 6 — Ordens e importação** (ver roadmap em `docs/roadmap.md` no repo de planejamento): scaffold criado a partir do template `stockapp-portfolio`, backend (`/orders`, recalculo transacional de `Position` a partir do histórico de ordens) já implementado e testado. Ainda sem domain/data/presentation de `Order` implementados neste módulo — próximo passo guiado.
+Backend done and tested: `/orders` CRUD, ticker validation, and transactional recalculation of `Position` from the order history (rolled back automatically if a sale would exceed the current position). This KMP module's domain/data/presentation for `Order` are not implemented yet — that's the next guided step.
 
 ## Stack
 
 - Kotlin 2.4.0 · Compose Multiplatform 1.11.1 · AGP 9.0.1
 
-## Rodando
+## Running
 
 ```
 ./gradlew :orders:build
@@ -27,4 +29,4 @@ Domain + data (ordens de compra/venda do usuário, cliente do [`stockapp-backend
 
 ---
 
-_Progresso mantido manualmente conforme o projeto avança._
+_Progress kept up to date manually as the project moves forward._
