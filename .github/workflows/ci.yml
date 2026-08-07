@@ -2,7 +2,8 @@ name: CI
 
 on:
   push:
-    branches: [ main ]
+    branches:
+      - 'release/**'
     tags: [ 'v*' ]
   pull_request:
     branches: [ main ]
@@ -12,7 +13,33 @@ permissions:
   packages: write
 
 jobs:
+  # PR check: Android/JVM + common tests only, on ubuntu-latest (no Apple-target minute multiplier).
+  # Kotlin/Native can't cross-compile iOS targets outside a macOS host, so this job never touches them.
   build:
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v4
+
+      - name: Android build and test
+        run: ./gradlew :orders:testAndroidHostTest
+        env:
+          GITHUB_ACTOR: ${{ github.actor }}
+          GITHUB_TOKEN: ${{ secrets.GH_PACKAGES_TOKEN }}
+
+  # Full build (all KMP targets, including iOS) — only when generating a release:
+  # a version tag (publishes to GitHub Packages) or a push to a release/* branch.
+  release:
+    if: github.event_name == 'push'
     runs-on: macos-latest
     steps:
       - uses: actions/checkout@v4
@@ -27,7 +54,7 @@ jobs:
         uses: gradle/actions/setup-gradle@v4
 
       - name: Build and test
-        run: ./gradlew build
+        run: ./gradlew build -PfullIosMatrix=true
         env:
           GITHUB_ACTOR: ${{ github.actor }}
           GITHUB_TOKEN: ${{ secrets.GH_PACKAGES_TOKEN }}
