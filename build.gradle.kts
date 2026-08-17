@@ -27,3 +27,9 @@ project(":sample-android") {
         isSkipProject = true
     }
 }
+
+allprojects {
+    dependencyLocking {
+        lockAllConfigurations()
+    }
+}
