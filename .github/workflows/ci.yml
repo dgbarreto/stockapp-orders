@@ -36,6 +36,13 @@ jobs:
           GITHUB_ACTOR: ${{ github.actor }}
           GITHUB_TOKEN: ${{ secrets.GH_PACKAGES_TOKEN }}
 
+      - name: SonarQube Cloud Scan
+        run: ./gradlew sonar
+        env:
+          GITHUB_ACTOR: ${{ github.actor }}
+          GITHUB_TOKEN: ${{ secrets.GH_PACKAGES_TOKEN }}
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+
   # Full build (all KMP targets, including iOS) — only when generating a release:
   # a version tag (publishes to GitHub Packages) or a push to a release/* branch.
   release:

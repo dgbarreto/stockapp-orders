@@ -6,4 +6,13 @@ plugins {
     alias(libs.plugins.composeMultiplatform) apply false
     alias(libs.plugins.composeCompiler) apply false
     alias(libs.plugins.kotlinMultiplatform) apply false
+    alias(libs.plugins.sonarqube)
+}
+
+sonar {
+    properties {
+        property("sonar.projectKey", "dgbarreto_stockapp-orders")
+        property("sonar.organization", "dgbarreto")
+        property("sonar.sources", "orders/src")
+    }
 }
