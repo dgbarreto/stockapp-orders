@@ -19,11 +19,11 @@ sonar {
 // Demo/fixture modules, not product code — excluded from analysis.
 project(":sample") {
     sonar {
-        skipProject = true
+        isSkipProject = true
     }
 }
 project(":sample-android") {
     sonar {
-        skipProject = true
+        isSkipProject = true
     }
 }
