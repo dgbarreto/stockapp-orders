@@ -3,6 +3,17 @@
    <configuration>
       <verify-metadata>true</verify-metadata>
       <verify-signatures>false</verify-signatures>
+      <trusted-artifacts>
+         <!-- AGP 9.0.1's own transitive graph pulls these in via an unpinned version
+              range (not something declared in our build), so the exact resolved
+              version drifts across builds as new releases land on Maven Central,
+              breaking checksum verification unpredictably. Trusted regardless of
+              version rather than pinned, since pinning would just break again on
+              the next drift. -->
+         <trust group="com.google.guava" name="guava-parent" reason="AGP's transitive graph resolves this via an unpinned range; the exact version drifts across builds"/>
+         <trust group="org.junit" name="junit-bom" reason="AGP's transitive graph resolves this via an unpinned range; the exact version drifts across builds"/>
+         <trust group="org.jetbrains.kotlinx" name="kotlinx-coroutines-bom" reason="AGP's transitive graph resolves this via an unpinned range; the exact version drifts across builds"/>
+      </trusted-artifacts>
    </configuration>
    <components>
       <component group="androidx.activity" name="activity" version="1.13.0">
