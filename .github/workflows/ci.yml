@@ -11,8 +11,13 @@ on:
 
 jobs:
   ci:
+    permissions:
+      contents: read
+      packages: write
     uses: dgbarreto/stockapp-app/.github/workflows/kmp-module-ci.yml@main
     with:
       module: orders
       use-konan-cache: false
-    secrets: inherit
+    secrets:
+      GH_PACKAGES_TOKEN: ${{ secrets.GH_PACKAGES_TOKEN }}
+      SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
