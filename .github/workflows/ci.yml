@@ -3,6 +3,7 @@ name: CI
 on:
   push:
     branches:
+      - main
       - 'release/**'
     tags: [ 'v*' ]
   pull_request:
@@ -13,10 +14,13 @@ permissions:
   packages: write
 
 jobs:
-  # PR check: Android/JVM + common tests only, on ubuntu-latest (no Apple-target minute multiplier).
+  # PR check + post-merge SonarQube analysis: Android/JVM + common tests only, on
+  # ubuntu-latest (no Apple-target minute multiplier). Runs on PRs (build/test signal)
+  # and on push to main (so SonarCloud gets a real main-branch analysis, not just PR
+  # analyses that vanish once the PR branch is deleted).
   # Kotlin/Native can't cross-compile iOS targets outside a macOS host, so this job never touches them.
   build:
-    if: github.event_name == 'pull_request'
+    if: github.event_name == 'pull_request' || (github.event_name == 'push' && github.ref == 'refs/heads/main')
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -47,8 +51,10 @@ jobs:
 
   # Full build (all KMP targets, including iOS) — only when generating a release:
   # a version tag (publishes to GitHub Packages) or a push to a release/* branch.
+  # Excludes push to main (that's the lightweight build job above) so a routine
+  # merge never triggers the costly macOS/full-iOS-matrix job.
   release:
-    if: github.event_name == 'push'
+    if: github.event_name == 'push' && github.ref != 'refs/heads/main'
     runs-on: macos-latest
     steps:
       - uses: actions/checkout@v4
