@@ -2,6 +2,7 @@ package com.danilobarreto.stockapp.orders.presentation
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -13,8 +14,9 @@ import androidx.compose.foundation.layout.safeContentPadding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.Icon
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -25,17 +27,24 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import androidx.compose.material3.Text
+import androidx.compose.ui.unit.sp
+import com.danilobarreto.stockapp.designsystem.components.StockAppChip
 import com.danilobarreto.stockapp.designsystem.components.StockAppErrorBanner
 import com.danilobarreto.stockapp.designsystem.components.StockAppPrimaryButton
+import com.danilobarreto.stockapp.designsystem.components.StockAppSegmentedControl
+import com.danilobarreto.stockapp.designsystem.components.StockAppStepper
 import com.danilobarreto.stockapp.designsystem.components.StockAppTextField
+import com.danilobarreto.stockapp.designsystem.icons.StockAppIcons
 import com.danilobarreto.stockapp.designsystem.theme.StockAppColors
+import com.danilobarreto.stockapp.designsystem.theme.StockAppShapes
 import com.danilobarreto.stockapp.designsystem.theme.StockAppTypography
 import com.danilobarreto.stockapp.designsystem.util.todayIsoDate
+import com.danilobarreto.stockapp.designsystem.util.toDecimalString
 import com.danilobarreto.stockapp.orders.domain.AssetType
 import com.danilobarreto.stockapp.orders.domain.OrderSide
 
@@ -45,34 +54,35 @@ fun OrderFormScreen(
     onBack: () -> Unit,
     onSaved: () -> Unit,
 ) {
+    val uiState by viewModel.uiState.collectAsState()
+
+    LaunchedEffect(Unit) { viewModel.loadRecentTickers() }
+    LaunchedEffect(uiState) {
+        if (uiState is OrderFormUiState.Success) onSaved()
+    }
+
     Column(
         modifier = Modifier
             .fillMaxSize()
             .background(StockAppColors.surface1)
             .safeContentPadding()
             .verticalScroll(rememberScrollState())
-            .padding(16.dp)
+            .padding(horizontal = 16.dp)
+            .padding(bottom = 24.dp)
     ) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            Box(
-                modifier = Modifier
-                    .size(32.dp)
-                    .clip(CircleShape)
-                    .background(StockAppColors.surface2)
-                    .clickable(onClick = onBack),
-                contentAlignment = Alignment.Center,
-            ) {
-                Text("←", color = StockAppColors.textPrimary)
-            }
-            Text(
-                "Nova ordem",
-                style = StockAppTypography.titleLarge,
-                color = StockAppColors.textPrimary,
-                modifier = Modifier.padding(start = 12.dp),
-            )
+        Box(
+            modifier = Modifier
+                .padding(top = 12.dp)
+                .size(40.dp)
+                .clip(CircleShape)
+                .background(StockAppColors.surface2)
+                .clickable(onClick = onBack),
+            contentAlignment = Alignment.Center,
+        ) {
+            Icon(StockAppIcons.ArrowLeft, contentDescription = "Voltar", tint = StockAppColors.textPrimary, modifier = Modifier.size(18.dp))
         }
 
-        OrderFormFields(viewModel = viewModel, onSaved = onSaved, topPadding = 20.dp)
+        OrderFormFields(viewModel = viewModel, onCancel = onBack, topPadding = 20.dp)
     }
 }
 
@@ -81,134 +91,192 @@ fun OrderFormScreen(
 @Composable
 internal fun OrderFormFields(
     viewModel: OrderFormViewModel,
-    onSaved: () -> Unit,
+    onCancel: () -> Unit,
     topPadding: Dp = 0.dp,
 ) {
     val uiState by viewModel.uiState.collectAsState()
+    val recentTickers by viewModel.recentTickers.collectAsState()
 
     var ticker by remember { mutableStateOf("") }
     var assetType by remember { mutableStateOf(AssetType.STOCK) }
     var side by remember { mutableStateOf(OrderSide.BUY) }
-    var quantity by remember { mutableStateOf("") }
+    var quantity by remember { mutableStateOf(100) }
     var price by remember { mutableStateOf("") }
     var showMoreDetails by remember { mutableStateOf(false) }
     var fees by remember { mutableStateOf("") }
     var executedAt by remember { mutableStateOf(todayIsoDate()) }
 
-    LaunchedEffect(uiState) {
-        if (uiState is OrderFormUiState.Success) onSaved()
-    }
+    val priceValue = price.replace(",", ".").toDoubleOrNull() ?: 0.0
+    val total = priceValue * quantity
 
-    StockAppTextField(
-        label = "Ticker",
-        value = ticker,
-        onValueChange = { ticker = it.uppercase() },
-        placeholder = "PETR4",
-        modifier = Modifier.padding(top = topPadding),
-    )
-
-    Text("Tipo de ativo", style = StockAppTypography.labelMedium, color = StockAppColors.textSecondary, modifier = Modifier.padding(top = 16.dp, bottom = 6.dp))
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .background(StockAppColors.border, RoundedCornerShape(10.dp))
-            .padding(3.dp)
-    ) {
-        FormSegment("Ação", assetType == AssetType.STOCK, Modifier.weight(1f)) { assetType = AssetType.STOCK }
-        FormSegment("FII", assetType == AssetType.FII, Modifier.weight(1f)) { assetType = AssetType.FII }
-    }
-
-    Text("Operação", style = StockAppTypography.labelMedium, color = StockAppColors.textSecondary, modifier = Modifier.padding(top = 16.dp, bottom = 6.dp))
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .background(StockAppColors.border, RoundedCornerShape(10.dp))
-            .padding(3.dp)
-    ) {
-        FormSegment("Compra", side == OrderSide.BUY, Modifier.weight(1f)) { side = OrderSide.BUY }
-        FormSegment("Venda", side == OrderSide.SELL, Modifier.weight(1f)) { side = OrderSide.SELL }
-    }
-
-    StockAppTextField(
-        label = "Quantidade",
-        value = quantity,
-        onValueChange = { quantity = it.filter(Char::isDigit) },
-        keyboardType = KeyboardType.Number,
-        modifier = Modifier.padding(top = 16.dp),
-    )
-
-    StockAppTextField(
-        label = "Preço",
-        value = price,
-        onValueChange = { price = it },
-        placeholder = "32.40",
-        keyboardType = KeyboardType.Decimal,
-        modifier = Modifier.padding(top = 16.dp),
-    )
-
-    Text(
-        if (showMoreDetails) "Ocultar detalhes" else "Mais detalhes",
-        style = StockAppTypography.labelMedium,
-        color = StockAppColors.textAccent,
-        modifier = Modifier
-            .padding(top = 16.dp)
-            .clickable { showMoreDetails = !showMoreDetails },
-    )
-
-    if (showMoreDetails) {
-        StockAppTextField(
-            label = "Taxas (corretagem, emolumentos)",
-            value = fees,
-            onValueChange = { fees = it },
-            placeholder = "0.00",
-            keyboardType = KeyboardType.Decimal,
-            modifier = Modifier.padding(top = 12.dp),
+    Column(modifier = Modifier.padding(top = topPadding)) {
+        Text(
+            "Nova ordem",
+            style = StockAppTypography.titleLarge.copy(fontSize = 24.sp),
+            color = StockAppColors.textPrimary,
         )
-        StockAppTextField(
-            label = "Data da operação",
-            value = executedAt,
-            onValueChange = { executedAt = it },
-            placeholder = "yyyy-MM-dd",
-            modifier = Modifier.padding(top = 12.dp),
+        Text(
+            "Registre uma compra ou venda em segundos.",
+            style = StockAppTypography.bodySmall,
+            color = StockAppColors.textSecondary,
+            modifier = Modifier.padding(top = 4.dp, bottom = 20.dp),
         )
-    }
 
-    if (uiState is OrderFormUiState.Error) {
-        StockAppErrorBanner(
-            (uiState as OrderFormUiState.Error).message,
+        StockAppSegmentedControl(
+            options = listOf("Compra", "Venda"),
+            selectedIndex = if (side == OrderSide.BUY) 0 else 1,
+            onOptionSelected = { side = if (it == 0) OrderSide.BUY else OrderSide.SELL },
+        )
+
+        // Não está no protótipo (que assume o tipo do ativo), mas o backend exige - mantido
+        // como um segundo segmentado, sem o mesmo destaque visual do Compra/Venda.
+        Text(
+            "Tipo de ativo",
+            style = StockAppTypography.labelMedium,
+            color = StockAppColors.textSecondary,
+            modifier = Modifier.padding(top = 16.dp, bottom = 6.dp),
+        )
+        StockAppSegmentedControl(
+            options = listOf("Ação", "FII"),
+            selectedIndex = if (assetType == AssetType.STOCK) 0 else 1,
+            onOptionSelected = { assetType = if (it == 0) AssetType.STOCK else AssetType.FII },
+        )
+
+        StockAppTextField(
+            label = "Ticker",
+            value = ticker,
+            onValueChange = { ticker = it.uppercase() },
+            placeholder = "Digite o ticker (ex.: PETR4)",
+            leadingIcon = StockAppIcons.Search,
             modifier = Modifier.padding(top = 16.dp),
         )
-    }
 
-    StockAppPrimaryButton(
-        text = "Salvar",
-        loading = uiState is OrderFormUiState.Loading,
-        enabled = ticker.isNotBlank() && quantity.isNotBlank() && price.isNotBlank(),
-        onClick = {
-            viewModel.save(
-                ticker = ticker,
-                assetType = assetType,
-                side = side,
-                quantity = quantity.toIntOrNull() ?: 0,
-                price = price.toDoubleOrNull() ?: 0.0,
-                fees = fees.toDoubleOrNull() ?: 0.0,
-                executedAt = executedAt,
+        if (recentTickers.isNotEmpty()) {
+            Text(
+                "Últimas ordens",
+                style = StockAppTypography.labelSmall,
+                color = StockAppColors.textSecondary,
+                modifier = Modifier.padding(top = 12.dp, bottom = 8.dp),
             )
-        },
-        modifier = Modifier.padding(top = 24.dp),
-    )
-}
+            Row(
+                modifier = Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+            ) {
+                recentTickers.forEach { recent ->
+                    StockAppChip(text = recent, selected = recent == ticker, onClick = { ticker = recent })
+                }
+            }
+        }
 
-@Composable
-private fun FormSegment(label: String, selected: Boolean, modifier: Modifier = Modifier, onClick: () -> Unit) {
-    Text(
-        label,
-        style = StockAppTypography.bodyMedium,
-        color = if (selected) StockAppColors.textPrimary else StockAppColors.textSecondary,
-        textAlign = TextAlign.Center,
-        modifier = modifier
-            .clickable(onClick = onClick)
-            .background(if (selected) StockAppColors.surface2 else StockAppColors.border, RoundedCornerShape(8.dp))
-            .padding(vertical = 8.dp)
-    )
+        Row(
+            modifier = Modifier.fillMaxWidth().padding(top = 18.dp),
+            horizontalArrangement = Arrangement.spacedBy(10.dp),
+        ) {
+            Column(
+                modifier = Modifier.weight(1f).background(StockAppColors.surface2, StockAppShapes.cardRadius).padding(14.dp),
+            ) {
+                Text("Quantidade", style = StockAppTypography.labelMedium, color = StockAppColors.textSecondary, modifier = Modifier.padding(bottom = 8.dp))
+                StockAppStepper(value = quantity, onValueChange = { quantity = it }, min = 10, step = 10)
+            }
+            Column(modifier = Modifier.weight(1f)) {
+                StockAppTextField(
+                    label = "Preço (R$)",
+                    value = price,
+                    onValueChange = { price = it },
+                    placeholder = "0,00",
+                    keyboardType = KeyboardType.Decimal,
+                )
+            }
+        }
+
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(top = 14.dp)
+                .background(StockAppColors.primaryTint, StockAppShapes.cardRadius)
+                .padding(14.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Column {
+                Text("Total da ordem", style = StockAppTypography.labelMedium, color = StockAppColors.primaryDeep)
+                Text(
+                    "R$ ${total.toDecimalString()}",
+                    style = StockAppTypography.headerTitle,
+                    color = StockAppColors.primaryDeep,
+                    modifier = Modifier.padding(top = 2.dp),
+                )
+            }
+            Text(
+                if (side == OrderSide.BUY) "Sai do caixa e entra na carteira" else "Entra no caixa e baixa a posição",
+                style = StockAppTypography.labelSmall,
+                color = StockAppColors.primaryDeep,
+                textAlign = TextAlign.End,
+                modifier = Modifier.weight(1f, fill = false).padding(start = 10.dp),
+            )
+        }
+
+        Text(
+            if (showMoreDetails) "Ocultar detalhes" else "Mais detalhes",
+            style = StockAppTypography.labelMedium,
+            color = StockAppColors.textAccent,
+            modifier = Modifier
+                .padding(top = 16.dp)
+                .clickable { showMoreDetails = !showMoreDetails },
+        )
+
+        if (showMoreDetails) {
+            StockAppTextField(
+                label = "Taxas (corretagem, emolumentos)",
+                value = fees,
+                onValueChange = { fees = it },
+                placeholder = "0.00",
+                keyboardType = KeyboardType.Decimal,
+                modifier = Modifier.padding(top = 12.dp),
+            )
+            StockAppTextField(
+                label = "Data da operação",
+                value = executedAt,
+                onValueChange = { executedAt = it },
+                placeholder = "yyyy-MM-dd",
+                modifier = Modifier.padding(top = 12.dp),
+            )
+        }
+
+        if (uiState is OrderFormUiState.Error) {
+            StockAppErrorBanner(
+                (uiState as OrderFormUiState.Error).message,
+                modifier = Modifier.padding(top = 16.dp),
+            )
+        }
+
+        StockAppPrimaryButton(
+            text = "Confirmar ${if (side == OrderSide.BUY) "compra" else "venda"}${ticker.takeIf { it.isNotBlank() }?.let { " de $it" } ?: ""}",
+            loading = uiState is OrderFormUiState.Loading,
+            enabled = ticker.isNotBlank() && quantity > 0 && priceValue > 0,
+            onClick = {
+                viewModel.save(
+                    ticker = ticker,
+                    assetType = assetType,
+                    side = side,
+                    quantity = quantity,
+                    price = priceValue,
+                    fees = fees.replace(",", ".").toDoubleOrNull() ?: 0.0,
+                    executedAt = executedAt,
+                )
+            },
+            modifier = Modifier.padding(top = 22.dp),
+        )
+
+        Text(
+            "Cancelar",
+            style = StockAppTypography.bodyMedium.copy(fontWeight = FontWeight.SemiBold),
+            color = StockAppColors.textSecondary,
+            textAlign = TextAlign.Center,
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(top = 14.dp)
+                .clickable(onClick = onCancel),
+        )
+    }
 }
