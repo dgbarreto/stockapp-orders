@@ -15,7 +15,12 @@ import kotlinx.coroutines.launch
 sealed interface OrderFormUiState {
     data object Idle : OrderFormUiState
     data object Loading : OrderFormUiState
-    data object Success : OrderFormUiState
+    data class Success(
+        val ticker: String,
+        val side: OrderSide,
+        val quantity: Int,
+        val price: Double,
+    ) : OrderFormUiState
     data class Error(val message: String) : OrderFormUiState
 }
 
@@ -24,6 +29,22 @@ class OrderFormViewModel(
 ) : ViewModel() {
     private val _uiState = MutableStateFlow<OrderFormUiState>(OrderFormUiState.Idle)
     val uiState: StateFlow<OrderFormUiState> = _uiState.asStateFlow()
+
+    private val _recentTickers = MutableStateFlow<List<String>>(emptyList())
+    val recentTickers: StateFlow<List<String>> = _recentTickers.asStateFlow()
+
+    fun loadRecentTickers() {
+        viewModelScope.launch {
+            runCatching { repository.getOrders() }
+                .onSuccess { orders ->
+                    _recentTickers.value = orders
+                        .sortedByDescending { it.executedAt }
+                        .map { it.ticker }
+                        .distinct()
+                        .take(8)
+                }
+        }
+    }
 
     fun save(
         ticker: String,
@@ -46,7 +67,7 @@ class OrderFormViewModel(
                     fees,
                     executedAt
                 )
-                OrderFormUiState.Success
+                OrderFormUiState.Success(ticker.uppercase(), side, quantity, price)
             } catch (e: ClientRequestException) {
                 OrderFormUiState.Error(parseOrderErrorMessage(e))
             } catch (e: Exception) {
