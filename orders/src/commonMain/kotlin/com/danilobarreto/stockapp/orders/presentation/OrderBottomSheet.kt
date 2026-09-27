@@ -43,7 +43,7 @@ fun OrderBottomSheet(
     onDismiss: () -> Unit,
     onSaved: () -> Unit,
 ) {
-    val sheetState = rememberModalBottomSheetState()
+    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     val scope = rememberCoroutineScope()
     val uiState by viewModel.uiState.collectAsState()
 
