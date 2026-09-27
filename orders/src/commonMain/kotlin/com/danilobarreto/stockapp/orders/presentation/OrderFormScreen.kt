@@ -14,6 +14,8 @@ import androidx.compose.foundation.layout.safeContentPadding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.text.BasicTextField
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
@@ -27,6 +29,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
@@ -108,6 +111,17 @@ internal fun OrderFormFields(
 
     val priceValue = price.replace(",", ".").toDoubleOrNull() ?: 0.0
     val total = priceValue * quantity
+    // Ticker termina em 11 → é FII; termina em 3 ou 4 → é ação. Qualquer outro caso (ou
+    // ticker vazio/incompleto) mantém o que já estava selecionado, sem forçar nada.
+    val setTicker: (String) -> Unit = { newValue ->
+        val upper = newValue.uppercase()
+        ticker = upper
+        assetType = when {
+            upper.endsWith("11") -> AssetType.FII
+            upper.endsWith("3") || upper.endsWith("4") -> AssetType.STOCK
+            else -> assetType
+        }
+    }
 
     Column(modifier = Modifier.padding(top = topPadding)) {
         Text(
@@ -145,7 +159,7 @@ internal fun OrderFormFields(
         StockAppTextField(
             label = "Ticker",
             value = ticker,
-            onValueChange = { ticker = it.uppercase() },
+            onValueChange = setTicker,
             placeholder = "Digite o ticker (ex.: PETR4)",
             leadingIcon = StockAppIcons.Search,
             modifier = Modifier.padding(top = 16.dp),
@@ -163,7 +177,7 @@ internal fun OrderFormFields(
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
             ) {
                 recentTickers.forEach { recent ->
-                    StockAppChip(text = recent, selected = recent == ticker, onClick = { ticker = recent })
+                    StockAppChip(text = recent, selected = recent == ticker, onClick = { setTicker(recent) })
                 }
             }
         }
@@ -178,13 +192,23 @@ internal fun OrderFormFields(
                 Text("Quantidade", style = StockAppTypography.labelMedium, color = StockAppColors.textSecondary, modifier = Modifier.padding(bottom = 8.dp))
                 StockAppStepper(value = quantity, onValueChange = { quantity = it }, min = 10, step = 10)
             }
-            Column(modifier = Modifier.weight(1f)) {
-                StockAppTextField(
-                    label = "Preço (R$)",
+            Column(
+                modifier = Modifier.weight(1f).background(StockAppColors.surface2, StockAppShapes.cardRadius).padding(14.dp),
+            ) {
+                Text("Preço (R$)", style = StockAppTypography.labelMedium, color = StockAppColors.textSecondary, modifier = Modifier.padding(bottom = 8.dp))
+                BasicTextField(
                     value = price,
                     onValueChange = { price = it },
-                    placeholder = "0,00",
-                    keyboardType = KeyboardType.Decimal,
+                    singleLine = true,
+                    textStyle = StockAppTypography.titleMedium.copy(fontSize = 19.sp, color = StockAppColors.textPrimary),
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+                    cursorBrush = SolidColor(StockAppColors.primary),
+                    decorationBox = { innerTextField ->
+                        if (price.isEmpty()) {
+                            Text("0,00", style = StockAppTypography.titleMedium.copy(fontSize = 19.sp), color = StockAppColors.textMuted)
+                        }
+                        innerTextField()
+                    },
                 )
             }
         }
