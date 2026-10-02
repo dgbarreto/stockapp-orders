@@ -37,6 +37,7 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.danilobarreto.stockapp.designsystem.components.StockAppChip
+import com.danilobarreto.stockapp.designsystem.components.StockAppDateField
 import com.danilobarreto.stockapp.designsystem.components.StockAppErrorBanner
 import com.danilobarreto.stockapp.designsystem.components.StockAppPrimaryButton
 import com.danilobarreto.stockapp.designsystem.components.StockAppSegmentedControl
@@ -46,6 +47,7 @@ import com.danilobarreto.stockapp.designsystem.icons.StockAppIcons
 import com.danilobarreto.stockapp.designsystem.theme.StockAppColors
 import com.danilobarreto.stockapp.designsystem.theme.StockAppShapes
 import com.danilobarreto.stockapp.designsystem.theme.StockAppTypography
+import com.danilobarreto.stockapp.designsystem.util.toBrl
 import com.danilobarreto.stockapp.designsystem.util.todayIsoDate
 import com.danilobarreto.stockapp.designsystem.util.toDecimalString
 import com.danilobarreto.stockapp.orders.domain.AssetType
@@ -126,7 +128,7 @@ internal fun OrderFormFields(
     Column(modifier = Modifier.padding(top = topPadding)) {
         Text(
             "Nova ordem",
-            style = StockAppTypography.titleLarge.copy(fontSize = 24.sp),
+            style = StockAppTypography.titleLarge.copy(fontSize = 28.sp),
             color = StockAppColors.textPrimary,
         )
         Text(
@@ -168,7 +170,7 @@ internal fun OrderFormFields(
         if (recentTickers.isNotEmpty()) {
             Text(
                 "Últimas ordens",
-                style = StockAppTypography.labelSmall,
+                style = StockAppTypography.labelMedium,
                 color = StockAppColors.textSecondary,
                 modifier = Modifier.padding(top = 12.dp, bottom = 8.dp),
             )
@@ -187,15 +189,15 @@ internal fun OrderFormFields(
             horizontalArrangement = Arrangement.spacedBy(10.dp),
         ) {
             Column(
-                modifier = Modifier.weight(1f).background(StockAppColors.surface2, StockAppShapes.cardRadius).padding(14.dp),
+                modifier = Modifier.weight(1f).background(StockAppColors.surface2, StockAppShapes.cardRadius).padding(16.dp),
             ) {
-                Text("Quantidade", style = StockAppTypography.labelMedium, color = StockAppColors.textSecondary, modifier = Modifier.padding(bottom = 8.dp))
+                Text("Quantidade", style = StockAppTypography.labelMedium, color = StockAppColors.textSecondary, modifier = Modifier.padding(bottom = 10.dp))
                 StockAppStepper(value = quantity, onValueChange = { quantity = it }, min = 10, step = 10)
             }
             Column(
-                modifier = Modifier.weight(1f).background(StockAppColors.surface2, StockAppShapes.cardRadius).padding(14.dp),
+                modifier = Modifier.weight(1f).background(StockAppColors.surface2, StockAppShapes.cardRadius).padding(16.dp),
             ) {
-                Text("Preço (R$)", style = StockAppTypography.labelMedium, color = StockAppColors.textSecondary, modifier = Modifier.padding(bottom = 8.dp))
+                Text("Preço (R$)", style = StockAppTypography.labelMedium, color = StockAppColors.textSecondary, modifier = Modifier.padding(bottom = 10.dp))
                 BasicTextField(
                     value = price,
                     onValueChange = { price = it },
@@ -225,7 +227,7 @@ internal fun OrderFormFields(
             Column {
                 Text("Total da ordem", style = StockAppTypography.labelMedium, color = StockAppColors.primaryDeep)
                 Text(
-                    "R$ ${total.toDecimalString()}",
+                    "R$ ${total.toBrl()}",
                     style = StockAppTypography.headerTitle,
                     color = StockAppColors.primaryDeep,
                     modifier = Modifier.padding(top = 2.dp),
@@ -254,15 +256,14 @@ internal fun OrderFormFields(
                 label = "Taxas (corretagem, emolumentos)",
                 value = fees,
                 onValueChange = { fees = it },
-                placeholder = "0.00",
+                placeholder = "0,00",
                 keyboardType = KeyboardType.Decimal,
                 modifier = Modifier.padding(top = 12.dp),
             )
-            StockAppTextField(
+            StockAppDateField(
                 label = "Data da operação",
-                value = executedAt,
-                onValueChange = { executedAt = it },
-                placeholder = "yyyy-MM-dd",
+                isoDate = executedAt,
+                onDateSelected = { executedAt = it },
                 modifier = Modifier.padding(top = 12.dp),
             )
         }

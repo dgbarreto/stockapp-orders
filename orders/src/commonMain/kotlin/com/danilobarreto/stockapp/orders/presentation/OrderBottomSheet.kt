@@ -32,6 +32,7 @@ import com.danilobarreto.stockapp.designsystem.components.StockAppPrimaryButton
 import com.danilobarreto.stockapp.designsystem.icons.StockAppIcons
 import com.danilobarreto.stockapp.designsystem.theme.StockAppColors
 import com.danilobarreto.stockapp.designsystem.theme.StockAppTypography
+import com.danilobarreto.stockapp.designsystem.util.toBrl
 import com.danilobarreto.stockapp.designsystem.util.toDecimalString
 import com.danilobarreto.stockapp.orders.domain.OrderSide
 import kotlinx.coroutines.launch
@@ -107,7 +108,7 @@ private fun OrderSuccessContent(
             modifier = Modifier.padding(top = 18.dp),
         )
         Text(
-            "$sideLabel de ${state.quantity} ${state.ticker} a R$ ${state.price.toDecimalString()} — total R$ ${total.toDecimalString()}.",
+            "$sideLabel de ${state.quantity} ${state.ticker} a ${state.price.toBrl()} — total ${total.toBrl()}.",
             style = StockAppTypography.bodyMedium,
             color = StockAppColors.textSecondary,
             textAlign = TextAlign.Center,
