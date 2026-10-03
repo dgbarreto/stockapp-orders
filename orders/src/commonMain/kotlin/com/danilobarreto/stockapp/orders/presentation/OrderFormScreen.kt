@@ -6,9 +6,12 @@ import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeContentPadding
 import androidx.compose.foundation.layout.size
@@ -185,17 +188,29 @@ internal fun OrderFormFields(
         }
 
         Row(
-            modifier = Modifier.fillMaxWidth().padding(top = 18.dp),
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(top = 18.dp)
+                .height(IntrinsicSize.Min),
             horizontalArrangement = Arrangement.spacedBy(10.dp),
         ) {
             Column(
-                modifier = Modifier.weight(1f).background(StockAppColors.surface2, StockAppShapes.cardRadius).padding(16.dp),
+                modifier = Modifier
+                    .weight(1f)
+                    .fillMaxHeight()
+                    .background(StockAppColors.surface2, StockAppShapes.cardRadius)
+                    .padding(16.dp),
             ) {
                 Text("Quantidade", style = StockAppTypography.labelMedium, color = StockAppColors.textSecondary, modifier = Modifier.padding(bottom = 10.dp))
                 StockAppStepper(value = quantity, onValueChange = { quantity = it }, min = 10, step = 10)
             }
             Column(
-                modifier = Modifier.weight(1f).background(StockAppColors.surface2, StockAppShapes.cardRadius).padding(16.dp),
+                modifier = Modifier
+                    .weight(1f)
+                    .fillMaxHeight()
+                    .background(StockAppColors.surface2, StockAppShapes.cardRadius)
+                    .padding(16.dp),
+                verticalArrangement = Arrangement.SpaceBetween,
             ) {
                 Text("Preço (R$)", style = StockAppTypography.labelMedium, color = StockAppColors.textSecondary, modifier = Modifier.padding(bottom = 10.dp))
                 BasicTextField(
@@ -227,7 +242,7 @@ internal fun OrderFormFields(
             Column {
                 Text("Total da ordem", style = StockAppTypography.labelMedium, color = StockAppColors.primaryDeep)
                 Text(
-                    "R$ ${total.toBrl()}",
+                    total.toBrl(),
                     style = StockAppTypography.headerTitle,
                     color = StockAppColors.primaryDeep,
                     modifier = Modifier.padding(top = 2.dp),
