@@ -104,15 +104,19 @@ internal fun OrderFormFields(
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val recentTickers by viewModel.recentTickers.collectAsState()
+    val prefill by viewModel.prefill.collectAsState()
 
-    var ticker by remember { mutableStateOf("") }
-    var assetType by remember { mutableStateOf(AssetType.STOCK) }
+    var ticker by remember(prefill) { mutableStateOf(prefill?.ticker ?: "") }
+    var assetType by remember(prefill) { mutableStateOf(prefill?.assetType ?: AssetType.STOCK) }
     var side by remember { mutableStateOf(OrderSide.BUY) }
     var quantity by remember { mutableStateOf(100) }
-    var price by remember { mutableStateOf("") }
+    var price by remember(prefill) {
+        mutableStateOf(prefill?.price?.toDecimalString(2)?.replace('.', ',') ?: "")
+    }
     var showMoreDetails by remember { mutableStateOf(false) }
     var fees by remember { mutableStateOf("") }
     var executedAt by remember { mutableStateOf(todayIsoDate()) }
+
 
     val priceValue = price.replace(",", ".").toDoubleOrNull() ?: 0.0
     val total = priceValue * quantity

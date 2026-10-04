@@ -24,6 +24,13 @@ sealed interface OrderFormUiState {
     data class Error(val message: String) : OrderFormUiState
 }
 
+/** Valores iniciais do formulário quando a ordem nasce de um contexto (ex.: Detalhe do ativo). */
+data class OrderPrefill(
+    val ticker: String,
+    val assetType: AssetType,
+    val price: Double?,
+)
+
 class OrderFormViewModel(
     private val repository: OrdersRepository,
 ) : ViewModel() {
@@ -32,6 +39,14 @@ class OrderFormViewModel(
 
     private val _recentTickers = MutableStateFlow<List<String>>(emptyList())
     val recentTickers: StateFlow<List<String>> = _recentTickers.asStateFlow()
+
+    private val _prefill = MutableStateFlow<OrderPrefill?>(null)
+    val prefill: StateFlow<OrderPrefill?> = _prefill.asStateFlow()
+
+    fun prefill(ticker: String, assetType: AssetType, price: Double?) {
+        reset()
+        _prefill.value = OrderPrefill(ticker.uppercase(), assetType, price)
+    }
 
     fun loadRecentTickers() {
         viewModelScope.launch {
@@ -78,5 +93,6 @@ class OrderFormViewModel(
 
     fun reset() {
         _uiState.value = OrderFormUiState.Idle
+        _prefill.value = null
     }
 }
