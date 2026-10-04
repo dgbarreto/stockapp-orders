@@ -106,6 +106,10 @@ internal fun OrderFormFields(
     val recentTickers by viewModel.recentTickers.collectAsState()
     val prefill by viewModel.prefill.collectAsState()
 
+    val suggestedPrice by viewModel.suggestedPrice.collectAsState()
+    // "Editado pelo usuário" = tem algo digitado que não veio da sugestão. Campo vazio volta a aceitar sugestão.
+    var priceEditedByUser by remember(prefill) { mutableStateOf(false) }
+
     var ticker by remember(prefill) { mutableStateOf(prefill?.ticker ?: "") }
     var assetType by remember(prefill) { mutableStateOf(prefill?.assetType ?: AssetType.STOCK) }
     var side by remember { mutableStateOf(OrderSide.BUY) }
@@ -130,6 +134,13 @@ internal fun OrderFormFields(
             upper.endsWith("3") || upper.endsWith("4") -> AssetType.STOCK
             else -> assetType
         }
+        viewModel.onTickerChanged(upper, assetType)
+    }
+
+    LaunchedEffect(suggestedPrice) {
+        if (!priceEditedByUser) {
+            price = suggestedPrice?.toDecimalString(2)?.replace('.', ',') ?: ""
+        }
     }
 
     Column(modifier = Modifier.padding(top = topPadding)) {
@@ -148,7 +159,10 @@ internal fun OrderFormFields(
         StockAppSegmentedControl(
             options = listOf("Compra", "Venda"),
             selectedIndex = if (side == OrderSide.BUY) 0 else 1,
-            onOptionSelected = { side = if (it == 0) OrderSide.BUY else OrderSide.SELL },
+            onOptionSelected = {
+                assetType = if (it == 0) AssetType.STOCK else AssetType.FII
+                viewModel.onTickerChanged(ticker, assetType)
+            },
         )
 
         // Não está no protótipo (que assume o tipo do ativo), mas o backend exige - mantido
@@ -219,7 +233,10 @@ internal fun OrderFormFields(
                 Text("Preço (R$)", style = StockAppTypography.labelMedium, color = StockAppColors.textSecondary, modifier = Modifier.padding(bottom = 10.dp))
                 BasicTextField(
                     value = price,
-                    onValueChange = { price = it },
+                    onValueChange = {
+                        price = it
+                        priceEditedByUser = it.isNotEmpty()
+                    },
                     singleLine = true,
                     textStyle = StockAppTypography.titleMedium.copy(fontSize = 19.sp, color = StockAppColors.textPrimary),
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
@@ -231,6 +248,14 @@ internal fun OrderFormFields(
                         innerTextField()
                     },
                 )
+                if (suggestedPrice != null && !priceEditedByUser) {
+                    Text(
+                        "Cotação atual",
+                        style = StockAppTypography.labelSmall,
+                        color = StockAppColors.textMuted,
+                        modifier = Modifier.padding(top = 2.dp),
+                    )
+                }
             }
         }
 
