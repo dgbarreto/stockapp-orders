@@ -220,7 +220,12 @@ internal fun OrderFormFields(
                     .padding(16.dp),
             ) {
                 Text("Quantidade", style = StockAppTypography.labelMedium, color = StockAppColors.textSecondary, modifier = Modifier.padding(bottom = 10.dp))
-                StockAppStepper(value = quantity, onValueChange = { quantity = it }, min = 10, step = 10)
+                StockAppStepper(
+                    value = quantity,
+                    onValueChange = { quantity = it },
+                    min = 1,
+                    step = if (assetType == AssetType.STOCK) 100 else 1,
+                )
             }
             Column(
                 modifier = Modifier
